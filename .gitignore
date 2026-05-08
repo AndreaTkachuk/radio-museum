@@ -42,3 +42,19 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+
+# Firebase
+.firebase/
+
+# Firebase AI agent garbage
+.agents/
+skills-lock.json
+
+# Angular build/cache
+.angular/
+
+# Environment files
+src/environments/*.local.ts
+
+# Logs
+*.log

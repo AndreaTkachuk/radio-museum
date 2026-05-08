@@ -1,0 +1,83 @@
+﻿:host {
+  display: block;
+  height: 100%;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Контейнер */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* Навігація */
+nav {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+nav a {
+  transition: color 0.3s ease;
+  text-decoration: none;
+}
+
+nav a:hover {
+  color: var(--amber-400, #fbbf24);
+}
+
+/* Карточки */
+.card {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+/* Кнопки */
+button, a.btn {
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  font-size: inherit;
+}
+
+button:hover, a.btn:hover {
+  transform: scale(1.05);
+}
+
+/* Форми */
+input, textarea {
+  font-family: inherit;
+  font-size: inherit;
+  transition: border-color 0.3s ease;
+}
+
+input:focus, textarea:focus {
+  outline: none;
+  border-color: var(--amber-600, #d97706);
+  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.1);
+}
+
+/* Адаптивність */
+@media (max-width: 768px) {
+  nav .flex {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .grid {
+    grid-template-columns: 1fr !important;
+  }
+}

@@ -1,70 +1,157 @@
 <!-- 
-  Contenitore principale dell'applicazione (Root Component)
-  Contiene: navigazione, contenuto principale e footer
+  Main application container (Root Component)
+  Contains: navigation, main content, and footer
 -->
 <div class="min-h-screen flex flex-col">
   <!-- 
-    BARRA DI NAVIGAZIONE
-    - Logo e nome dell'applicazione
-    - Link principali del menu (Home, Galleria, Admin)
-    - Selettore lingua (Italiano, Inglese)
+    NAVIGATION BAR
+    - Logo and application name
+    - Main menu links (Home, Gallery, Admin)
+    - Language selector (Italian, English)
   -->
-  <nav class="bg-gray-800 text-white shadow-lg sticky top-0 z-50">
-    <div class="container mx-auto px-4 py-4 flex justify-between items-center">
-      <!-- Logo e nome dell'applicazione -->
-      <div class="text-2xl font-bold">
-        {{ title() }}
-      </div>
+  <nav class="bg-stone-950/95 backdrop-blur-md text-stone-100 sticky top-0 z-50 border-b border-stone-800">
+  <div class="container mx-auto px-4">
 
-      <!-- Menu di navigazione e selettore lingua -->
-      <div class="flex gap-4 md:gap-8 items-center">
-        <!-- Link principali di navigazione -->
-        <a href="/" class="hover:text-amber-400 transition font-semibold">
-          Home
+    <div class="flex items-center justify-between h-20">
+
+      <!-- LOGO -->
+      <a
+        routerLink="/"
+        class="flex items-center gap-3 text-2xl font-bold tracking-wide text-amber-100 hover:text-amber-300 transition"
+      >
+        <span class="text-3xl">📻</span>
+        <span>{{ t.appTitle }}</span>
+      </a>
+
+    <!-- 
+    MAIN MENU (DESKTOP)
+    - Navigation links for main pages
+    - Language buttons
+  -->
+      <div class="hidden md:flex items-center gap-8">
+
+        <a
+          routerLink="/"
+          routerLinkActive="text-amber-400"
+          class="hover:text-amber-400 transition font-medium"
+        >
+          {{ t.home }}
         </a>
-        <a href="/gallery" class="hover:text-amber-400 transition font-semibold">
-          Galleria
+
+        <a
+          routerLink="/gallery"
+          routerLinkActive="text-amber-400"
+          class="hover:text-amber-400 transition font-medium"
+        >
+          {{ t.gallery }}
         </a>
-        <a href="/admin" class="hover:text-amber-400 transition font-semibold">
-          Admin
+
+        <!-- ADMIN -->
+        <a
+          routerLink="/admin"
+          routerLinkActive="text-amber-400"
+          [attr.aria-disabled]="adminLoading()"
+          [class.pointer-events-none]="adminLoading()"
+          [class.opacity-50]="adminLoading()"
+          class="bg-amber-700 hover:bg-amber-600 px-5 py-2 rounded-xl font-semibold shadow-lg transition"
+        >
+          {{ adminLoading() ? t.loading : t.admin }}
         </a>
 
-        <!-- Separatore (linea verticale) -->
-        <div class="h-6 w-px bg-gray-600"></div>
+        <!-- LANGUAGE SELECTOR -->
+        <div class="flex items-center gap-2 ml-4">
 
-        <!-- Selettore lingua con due pulsanti -->
-        <div class="flex gap-2">
-
-          <!-- Pulsante per la lingua italiana -->
           <button
             (click)="changeLanguage('it')"
-            [class.bg-amber-600]="getCurrentLanguage() === 'it'"
-            [class.bg-gray-700]="getCurrentLanguage() !== 'it'"
-            class="px-3 py-1 rounded transition text-sm font-semibold"
-            title="Lingua italiana"
+            [class.bg-amber-700]="getCurrentLanguage() === 'it'"
+            [class.bg-stone-800]="getCurrentLanguage() !== 'it'"
+            class="px-3 py-1 rounded-lg text-sm transition"
           >
             🇮🇹 IT
           </button>
 
-          <!-- Pulsante per la lingua inglese -->
           <button
             (click)="changeLanguage('en')"
-            [class.bg-amber-600]="getCurrentLanguage() === 'en'"
-            [class.bg-gray-700]="getCurrentLanguage() !== 'en'"
-            class="px-3 py-1 rounded transition text-sm font-semibold"
-            title="English language"
+            [class.bg-amber-700]="getCurrentLanguage() === 'en'"
+            [class.bg-stone-800]="getCurrentLanguage() !== 'en'"
+            class="px-3 py-1 rounded-lg text-sm transition"
           >
             🇬🇧 EN
           </button>
         </div>
       </div>
+
+      <!-- MOBILE MENU BUTTON -->
+      <button
+        class="md:hidden text-3xl"
+        (click)="mobileMenuOpen = !mobileMenuOpen"
+      >
+        ☰
+      </button>
     </div>
-  </nav>
+
+    <!-- MOBILE MENU -->
+    @if (mobileMenuOpen) {
+      <div class="md:hidden py-6 border-t border-stone-800">
+
+        <div class="flex flex-col gap-4">
+
+          <a
+            routerLink="/"
+            class="px-4 py-3 rounded-xl bg-stone-900 hover:bg-stone-800 transition"
+          >
+            {{ t.home }}
+          </a>
+
+          <a
+            routerLink="/gallery"
+            class="px-4 py-3 rounded-xl bg-stone-900 hover:bg-stone-800 transition"
+          >
+            {{ t.gallery }}
+          </a>
+
+          <!-- MOBILE ADMIN LINK -->
+          <a
+            routerLink="/admin"
+            [attr.aria-disabled]="adminLoading()"
+            [class.pointer-events-none]="adminLoading()"
+            [class.opacity-50]="adminLoading()"
+            class="px-4 py-3 rounded-xl bg-amber-700 hover:bg-amber-600 font-semibold transition"
+          >
+            {{ adminLoading() ? t.loading : t.admin }}
+          </a>
+
+          <!-- MOBILE LANGUAGE SELECTOR -->
+          <div class="flex gap-3 pt-4">
+
+            <button
+              (click)="changeLanguage('it')"
+              [class.bg-amber-700]="getCurrentLanguage() === 'it'"
+              [class.bg-stone-800]="getCurrentLanguage() !== 'it'"
+              class="px-4 py-2 rounded-lg"
+            >
+              🇮🇹 IT
+            </button>
+
+            <button
+              (click)="changeLanguage('en')"
+              [class.bg-amber-700]="getCurrentLanguage() === 'en'"
+              [class.bg-stone-800]="getCurrentLanguage() !== 'en'"
+              class="px-4 py-2 rounded-lg"
+            >
+              🇬🇧 EN
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</nav>
 
   <!-- 
-    CONTENUTO PRINCIPALE (MAIN)
-    - Punto di inserimento dinamico per i componenti basati sulle rotte
-    - Componenti: HomeComponent, GalleryComponent, AdminComponent
+    MAIN CONTENT AREA
+    - Dynamic insertion point for components based on routes
+    - Components: HomeComponent, GalleryComponent, AdminComponent
   -->
   <main class="flex-1">
     <router-outlet></router-outlet>
@@ -72,19 +159,19 @@
 
   <!-- 
     FOOTER
-    - Informazioni sul copyright
-    - Informazioni sulla tecnologia utilizzata (Angular)
+    - Copyright information
+    - Technology information (Angular)
   -->
   <footer class="bg-gray-800 text-white py-8 mt-12">
     <div class="container mx-auto px-4 text-center">
-      <!-- Informazioni copyright -->
+      <!-- Copyright information -->
       <p class="text-gray-400">
-        © 2026 Museo della Radio. Tutti i diritti riservati.
+        © 2026 Radio Museum. All rights reserved.
       </p>
       
-      <!-- Informazioni tecniche -->
+      <!-- Technical information -->
       <p class="text-gray-500 text-sm mt-2">
-        Sviluppato con ❤️ usando Angular {{ title() }}
+        Developed with ❤️ using Angular {{ t.appTitle }}
       </p>
     </div>
   </footer>

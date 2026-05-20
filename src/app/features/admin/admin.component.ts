@@ -1,142 +1,231 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
-import { RadioService, Radio } from '../../core/services/radio.service';
+import { Router, RouterLink } from '@angular/router';
+import { AsyncPipe } from '@angular/common';
+import { CloudinaryService } from '../../core/services/cloudinary.service';
+
+import {
+  FirestoreRadioService,
+  Radio
+} from '../../core/services/firestore-radio.service';
+
+import { AuthService } from '../../core/services/auth.service';
 import { LanguageService } from '../../core/services/language.service';
 
-/**
- * Адмін-панель для управління радіоприймачами
- * Дозволяє додавати, редагувати та видаляти радіо
- */
 @Component({
   selector: 'app-admin',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
-  template: `
-    <div class="min-h-screen bg-gray-900 text-white py-12">
-      <div class="container mx-auto px-4">
-        <!-- Заголовок -->
-        <h1 class="text-4xl font-bold mb-6">{{ t.adminTitle }}</h1>
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterLink,
+    AsyncPipe
+  ],
 
-        <!-- Кнопка повернення -->
-        <div class="mb-6">
-          <a routerLink="/" class="inline-block px-6 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg">
-            {{ t.back }}
-          </a>
+  template: `
+    <div class="min-h-screen bg-stone-950 text-stone-100 py-12">
+
+      <div class="container mx-auto px-4">
+
+        <div class="flex items-center justify-between mb-10">
+
+          <div>
+            <h1 class="text-4xl font-bold text-amber-200">
+              {{ t.adminTitle }}
+            </h1>
+
+            <p class="text-stone-400 mt-2">
+              {{ t.adminDescription }}
+            </p>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <button
+              (click)="logout()"
+              [disabled]="logoutLoading()"
+              class="px-5 py-3 bg-red-700 hover:bg-red-600 disabled:opacity-50 rounded-xl transition"
+            >
+              {{ logoutLoading() ? t.signingOut : t.logout }}
+            </button>
+
+            <a
+              routerLink="/"
+              class="px-5 py-3 bg-stone-800 hover:bg-stone-700 rounded-xl transition"
+            >
+              {{ t.back }}
+            </a>
+          </div>
         </div>
 
-        <!-- Основний контейнер з двома колонками -->
-        <div class="grid md:grid-cols-2 gap-8">
-          <!-- ЛІВА КОЛОНКА: Форма додавання -->
-          <div class="bg-gray-800 rounded-lg p-6">
-            <h2 class="text-2xl font-bold mb-6">{{ t.addNewRadio }}</h2>
-            
-            <!-- Форма для додавання нового радіо -->
-            <form (ngSubmit)="addRadio()" class="space-y-4">
-              <!-- Поле для назви радіо -->
+        <div class="grid lg:grid-cols-2 gap-8">
+
+          <!-- FORM -->
+
+          <div class="bg-stone-900 border border-stone-800 rounded-3xl p-8 shadow-2xl">
+
+            <h2 class="text-2xl font-bold text-amber-100 mb-8">
+              {{ t.addNewRadio }}
+            </h2>
+
+            <form
+              (ngSubmit)="addRadio()"
+              class="space-y-6"
+            >
+
               <div>
-                <label class="block text-sm font-medium mb-2">{{ t.radioName }}</label>
-                <input 
-                  [(ngModel)]="form.name" 
+                <label class="block text-sm mb-2 text-stone-300">
+                  {{ t.radioName }}
+                </label>
+
+                <input
+                  [(ngModel)]="form.name"
                   name="name"
-                  type="text" 
-                  class="w-full px-4 py-2 bg-gray-700 rounded text-white"
+                  type="text"
+                  class="w-full px-5 py-4 rounded-2xl bg-stone-800 border border-stone-700 text-white"
                   [placeholder]="t.radioName"
                 >
               </div>
 
-              <!-- Поле для року -->
               <div>
-                <label class="block text-sm font-medium mb-2">{{ t.year }}</label>
-                <input 
-                  [(ngModel)]="form.year" 
+                <label class="block text-sm mb-2 text-stone-300">
+                  {{ t.year }}
+                </label>
+
+                <input
+                  [(ngModel)]="form.year"
                   name="year"
-                  type="number" 
-                  class="w-full px-4 py-2 bg-gray-700 rounded text-white"
-                  placeholder="2024"
+                  type="number"
+                  class="w-full px-5 py-4 rounded-2xl bg-stone-800 border border-stone-700 text-white"
+                  placeholder="1952"
                 >
               </div>
 
-              <!-- Поле для опису -->
               <div>
-                <label class="block text-sm font-medium mb-2">{{ t.description }}</label>
-                <textarea 
-                  [(ngModel)]="form.description" 
+                <label class="block text-sm mb-2 text-stone-300">
+                  {{ t.description }}
+                </label>
+
+                <textarea
+                  [(ngModel)]="form.description"
                   name="description"
-                  rows="4"
-                  class="w-full px-4 py-2 bg-gray-700 rounded text-white"
+                  rows="5"
+                  class="w-full px-5 py-4 rounded-2xl bg-stone-800 border border-stone-700 text-white"
                   [placeholder]="t.description"
                 ></textarea>
               </div>
 
-              <!-- Поле для посилання на фото -->
               <div>
-                <label class="block text-sm font-medium mb-2">{{ t.photoUrl }}</label>
-                <input 
-                  [(ngModel)]="form.image" 
-                  name="image"
-                  type="text" 
-                  class="w-full px-4 py-2 bg-gray-700 rounded text-white"
-                  [placeholder]="t.photoUrl"
-                >
+                <label class="block text-sm mb-2 text-stone-300">
+                  {{ t.photoUrl }}
+                </label>
+
+                  <input
+                    type="file"
+                    accept="image/*"
+                    (change)="onFileSelected($event)"
+                    class="w-full px-5 py-4 rounded-2xl bg-stone-800 border border-stone-700 text-white"
+                  >
               </div>
 
-              <!-- Поле для технічних характеристик -->
               <div>
-                <label class="block text-sm font-medium mb-2">{{ t.specs }}</label>
-                <input 
-                  [(ngModel)]="form.specs" 
+                <label class="block text-sm mb-2 text-stone-300">
+                  {{ t.specs }}
+                </label>
+
+                <input
+                  [(ngModel)]="form.specs"
                   name="specs"
-                  type="text" 
-                  class="w-full px-4 py-2 bg-gray-700 rounded text-white"
+                  type="text"
+                  class="w-full px-5 py-4 rounded-2xl bg-stone-800 border border-stone-700 text-white"
                   [placeholder]="t.specs"
                 >
               </div>
 
-              <!-- Кнопка для додавання -->
-              <button 
+              <button
                 type="submit"
-                class="w-full px-6 py-3 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded transition"
+                class="w-full py-4 bg-amber-700 hover:bg-amber-600 rounded-2xl text-white font-semibold shadow-xl transition"
               >
                 {{ t.addButton }}
               </button>
             </form>
           </div>
 
-          <!-- ПРАВА КОЛОНКА: Список радіо -->
-          <div class="bg-gray-800 rounded-lg p-6">
-            <!-- Заголовок з кількістю -->
-            <h2 class="text-2xl font-bold mb-6">
-              {{ t.radioList }} ({{ radios.length }})
-            </h2>
-            
-            <!-- Список радіо (з можливістю прокрутки) -->
-            <div class="space-y-4 max-h-96 overflow-y-auto">
-              @for (radio of radios; track radio.id) {
-                <!-- Карточка радіо у списку -->
-                <div class="bg-gray-700 p-4 rounded flex justify-between items-start">
-                  <!-- Інформація про радіо -->
-                  <div class="flex-1">
-                    <h3 class="font-bold">{{ radio.name }}</h3>
-                    <p class="text-sm text-gray-300">{{ radio.year }}</p>
-                    <p class="text-xs text-gray-400 mt-1">{{ radio.description }}</p>
-                  </div>
-                  
-                  <!-- Кнопка видалення -->
-                  <button 
-                    (click)="deleteRadio(radio.id)"
-                    class="ml-2 px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-sm"
-                    [title]="'Видалити ' + radio.name"
+          <!-- RADIO LIST -->
+
+          <div class="bg-stone-900 border border-stone-800 rounded-3xl p-8 shadow-2xl">
+
+            <div class="flex items-center justify-between mb-8">
+
+              <h2 class="text-2xl font-bold text-amber-100">
+                {{ t.radioList }}
+              </h2>
+
+              <div class="text-sm text-stone-400">
+                {{ (radios$ | async)?.length || 0 }} {{ t.items }}
+              </div>
+            </div>
+
+            <div class="space-y-4 max-h-[700px] overflow-y-auto pr-2">
+
+              @for (radio of (radios$ | async); track radio.id) {
+
+                <div class="bg-stone-800 border border-stone-700 rounded-2xl p-5 flex gap-4">
+
+                  <img
+                    [src]="radio.image"
+                    [alt]="radio.name"
+                    class="w-24 h-24 rounded-xl object-cover"
                   >
-                    ❌
-                  </button>
+
+                  <div class="flex-1">
+
+                    <div class="flex items-start justify-between gap-4">
+
+                      <div>
+
+                        <h3 class="text-xl font-bold text-white">
+                          {{ radio.name }}
+                        </h3>
+
+                        <p class="text-amber-400 text-sm mt-1">
+                          {{ radio.year }}
+                        </p>
+                      </div>
+
+                      <button
+                        (click)="deleteRadio(radio.id!)"
+                        class="bg-red-700 hover:bg-red-600 px-3 py-2 rounded-xl transition"
+                      >
+                        ❌
+                      </button>
+                    </div>
+
+                    <p class="text-stone-300 text-sm mt-4 leading-relaxed">
+                      {{ radio.description }}
+                    </p>
+
+                    @if (radio.specs) {
+                      <div class="mt-4 text-xs text-stone-400">
+                        📻 {{ radio.specs }}
+                      </div>
+                    }
+                  </div>
                 </div>
               }
-              
-              <!-- Повідомлення коли список порожній -->
-              @if (radios.length === 0) {
-                <p class="text-gray-400 text-center py-8">{{ t.noRadios }}</p>
+
+              @if ((radios$ | async)?.length === 0) {
+
+                <div class="text-center py-20 text-stone-500">
+
+                  <div class="text-6xl mb-4">
+                    📻
+                  </div>
+
+                  <p>
+                    {{ t.noRadios }}
+                  </p>
+                </div>
               }
             </div>
           </div>
@@ -144,91 +233,88 @@ import { LanguageService } from '../../core/services/language.service';
       </div>
     </div>
   `,
+
   styles: []
 })
 export class AdminComponent {
-  // Впровадж сервісу для роботи з радіо
-  private radioService = inject(RadioService);
-  
-  // Впровадж сервісу для роботи з мовами
+  private radioService = inject(FirestoreRadioService);
   private langService = inject(LanguageService);
-  
-  // Список всіх радіо (оновлюється при змінах)
-  radios: Radio[] = [];
-  
-  // Об'єкт форми для введення даних
+  private authService = inject(AuthService);
+  private router = inject(Router);
+
+  radios$ = this.radioService.radios$;
+  protected logoutLoading = signal(false);
+
+  protected get t() {
+    return this.langService.getTranslations();
+  }
+  private cloudinaryService = inject(CloudinaryService);
+  selectedFile: File | null = null;
+
+
   form = {
     name: '',
     year: new Date().getFullYear(),
     description: '',
-    image: 'https://via.placeholder.com/300x200?text=Radio',
+    image: 'images/radios/default.jpg',
     specs: ''
   };
 
-  // Отримуємо поточні переклади
-  protected t = this.langService.getTranslations();
+  onFileSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
 
-  constructor() {
-    // Завантажуємо дані при створенні компонента
-    this.loadRadios();
+    if (input.files?.length) {
+      this.selectedFile = input.files[0];
+    }
   }
 
-  /**
-   * Завантажує список всіх радіо з сервісу
-   */
-  loadRadios(): void {
-    this.radios = this.radioService.getRadios();
-  }
-
-  /**
-   * Додає нове радіо в базу даних
-   * Перевіряє валідність даних перед додаванням
-   */
-  addRadio(): void {
-    // Перевіряємо, чи введена назва
+  async addRadio() {
     if (!this.form.name.trim()) {
       alert(this.t.nameRequired);
       return;
     }
 
-    // Додаємо радіо через сервіс (дані автоматично зберігаються в IndexDB)
-    this.radioService.addRadio({
+    let imageUrl = '';
+    if (this.selectedFile) {
+      imageUrl = await this.cloudinaryService.uploadImage(
+        this.selectedFile
+      );
+    }
+
+    await this.radioService.addRadio({
       name: this.form.name,
       year: this.form.year,
       description: this.form.description,
-      image: this.form.image,
+      image: imageUrl,
       specs: this.form.specs
     });
 
-    // Очищуємо форму для наступного введення
     this.form = {
       name: '',
       year: new Date().getFullYear(),
       description: '',
-      image: 'https://via.placeholder.com/300x200?text=Radio',
+      image: '',
       specs: ''
     };
 
-    // Оновлюємо список
-    this.loadRadios();
-    
-    // Показуємо повідомлення про успіх
+    this.selectedFile = null;
+
     alert(this.t.addSuccess);
   }
 
-  /**
-   * Видаляє радіо за його ID
-   * Перед видаленням запитує підтвердження користувача
-   * @param id - ID радіо для видалення
-   */
-  deleteRadio(id: string): void {
-    // Запитуємо підтвердження
+  async deleteRadio(id: string) {
     if (confirm(this.t.deleteConfirm)) {
-      // Видаляємо через сервіс (дані автоматично видаляються з IndexDB)
-      this.radioService.deleteRadio(id);
-      
-      // Оновлюємо список
-      this.loadRadios();
+      await this.radioService.deleteRadio(id);
+    }
+  }
+
+  async logout() {
+    try {
+      this.logoutLoading.set(true);
+      await this.authService.logout();
+      await this.router.navigate(['/login']);
+    } finally {
+      this.logoutLoading.set(false);
     }
   }
 }

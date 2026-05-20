@@ -1,37 +1,59 @@
 import { Component, signal, inject } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { RouterOutlet, Router, NavigationStart, NavigationEnd, NavigationCancel, NavigationError } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { LanguageService, Language } from './core/services/language.service';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 
 /**
- * Головний компонент додатку
- * Містить навігацію, маршрутизацію та селектор мови
+ * Main application component
+ * Contains navigation, routing, and language selector
  */
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, CommonModule],
+  imports: [RouterOutlet, CommonModule, RouterLink, RouterLinkActive],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
 export class App {
-  // Впровадж сервісу для роботи з мовами
+  // Inject language service for managing languages
   protected langService = inject(LanguageService);
+  protected router = inject(Router);
   
-  // Назва додатку (в реактивному сигналі)
-  protected readonly title = signal('Radio Museum');
+  protected adminLoading = signal(false);
+  mobileMenuOpen = false;
+
+  constructor() {
+    this.router.events.subscribe(event => {
+      if (event instanceof NavigationStart && event.url === '/admin') {
+        this.adminLoading.set(true);
+      }
+
+      if (
+        event instanceof NavigationEnd ||
+        event instanceof NavigationCancel ||
+        event instanceof NavigationError
+      ) {
+        this.adminLoading.set(false);
+      }
+    });
+  }
+
+  protected get t() {
+    return this.langService.getTranslations();
+  }
 
   /**
-   * Змінює поточну мову додатку
-   * @param lang - Мова для встановлення (uk, it, en)
+   * Changes the current application language
+   * @param lang - Language to set (it, en)
    */
   changeLanguage(lang: Language): void {
     this.langService.setLanguage(lang);
   }
 
   /**
-   * Отримує поточну мову
-   * @returns Код поточної мови
+   * Gets the current language
+   * @returns Current language code
    */
   getCurrentLanguage(): Language {
     return this.langService.getLanguage();

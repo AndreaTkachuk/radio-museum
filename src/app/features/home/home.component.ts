@@ -53,7 +53,7 @@ import { LanguageService } from '../../core/services/language.service';
               routerLink="/contact"
               class="bg-white/10 backdrop-blur border border-white/20 hover:bg-white/20 text-white px-10 py-4 rounded-xl text-lg font-semibold transition duration-300"
             >
-              Contatti
+              {{ t.contact }}
             </a>
           </div>
         </div>
@@ -63,12 +63,11 @@ import { LanguageService } from '../../core/services/language.service';
       <section class="container mx-auto px-6 py-20">
         <div class="text-center mb-16">
           <h2 class="text-4xl font-bold text-stone-800">
-            Collezione Vintage
+            {{ t.featuredTitle }}
           </h2>
 
           <p class="mt-4 text-stone-600 text-lg max-w-2xl mx-auto">
-            Scopri una selezione unica di radio storiche che hanno segnato
-            l’evoluzione della comunicazione e del design.
+            {{ t.featuredDescription }}
           </p>
         </div>
 
@@ -87,16 +86,15 @@ import { LanguageService } from '../../core/services/language.service';
 
             <div class="p-6">
               <div class="text-sm text-amber-700 font-semibold">
-                1948
+                {{ t.card1Year }}
               </div>
 
               <h3 class="text-2xl font-bold mt-2 text-stone-800">
-                Radio Classica
+                {{ t.card1Title }}
               </h3>
 
               <p class="mt-4 text-stone-600 leading-relaxed">
-                Un modello iconico del dopoguerra italiano con dettagli in
-                legno e design artigianale.
+                {{ t.card1Description }}
               </p>
             </div>
           </div>
@@ -113,16 +111,15 @@ import { LanguageService } from '../../core/services/language.service';
 
             <div class="p-6">
               <div class="text-sm text-amber-700 font-semibold">
-                1962
+                {{ t.card2Year }}
               </div>
 
               <h3 class="text-2xl font-bold mt-2 text-stone-800">
-                Radio Moderna
+                {{ t.card2Title }}
               </h3>
 
               <p class="mt-4 text-stone-600 leading-relaxed">
-                Linee eleganti e tecnologia innovativa che hanno rivoluzionato
-                il mondo della radio domestica.
+                {{ t.card2Description }}
               </p>
             </div>
           </div>
@@ -139,16 +136,15 @@ import { LanguageService } from '../../core/services/language.service';
 
             <div class="p-6">
               <div class="text-sm text-amber-700 font-semibold">
-                1975
+                {{ t.card3Year }}
               </div>
 
               <h3 class="text-2xl font-bold mt-2 text-stone-800">
-                Onde Analogiche
+                {{ t.card3Title }}
               </h3>
 
               <p class="mt-4 text-stone-600 leading-relaxed">
-                La magia del suono analogico e delle frequenze che hanno
-                accompagnato intere generazioni.
+                {{ t.card3Description }}
               </p>
             </div>
           </div>
@@ -174,5 +170,7 @@ import { LanguageService } from '../../core/services/language.service';
 export class HomeComponent {
   private langService = inject(LanguageService);
 
-  protected t = this.langService.getTranslations();
+  protected get t() {
+    return this.langService.getTranslations();
+  }
 }

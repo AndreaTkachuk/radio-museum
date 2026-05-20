@@ -1,59 +1,103 @@
 import { Component, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, AsyncPipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { RadioService } from '../../core/services/radio.service';
-import { LanguageService } from '../../core/services/language.service';
 
-/**
- * Компонент для відображення галереї радіо
- * Показує карточки з радіоприймачами та їхніми характеристиками
- */
+import {
+  FirestoreRadioService
+} from '../../core/services/firestore-radio.service';
+
+import {
+  LanguageService
+} from '../../core/services/language.service';
+
 @Component({
   selector: 'app-gallery',
   standalone: true,
-  imports: [CommonModule, RouterLink],
-  template: `
-    <div class="min-h-screen bg-gray-50 py-12">
-      <div class="container mx-auto px-4">
-        <!-- Заголовок сторінки -->
-        <h1 class="text-4xl font-bold text-center text-gray-800 mb-12">
-          {{ t.galleryTitle }}
-        </h1>
+  imports: [
+    CommonModule,
+    RouterLink,
+    AsyncPipe
+  ],
 
-        <!-- Кнопка повернення на головну -->
-        <div class="mb-6">
-          <a routerLink="/" class="inline-block px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg">
+  template: `
+    <div class="min-h-screen bg-stone-100 py-16">
+
+      <div class="container mx-auto px-4">
+
+        <!-- HEADER -->
+
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-14">
+
+          <div>
+
+            <h1 class="text-5xl font-bold text-stone-900">
+              {{ t.galleryTitle }}
+            </h1>
+
+            <p class="mt-3 text-stone-600 text-lg">
+              {{ t.galleryDescription }}
+            </p>
+          </div>
+
+          <a
+            routerLink="/"
+            class="inline-flex items-center justify-center px-6 py-3 bg-stone-900 hover:bg-stone-800 text-white rounded-2xl transition shadow-lg"
+          >
             {{ t.backToHome }}
           </a>
         </div>
 
-        <!-- Сітка карточок з радіо -->
-        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <!-- Цикл по всіх радіоприймачах -->
-          @for (radio of radios(); track radio.id) {
-            <!-- Карточка радіо -->
-            <div class="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition">
-              <!-- Зображення радіо -->
-              <img [src]="radio.image" [alt]="radio.name" class="w-full h-48 object-cover">
-              
-              <!-- Інформація про радіо -->
-              <div class="p-6">
-                <!-- Назва радіо -->
-                <h2 class="text-xl font-bold text-gray-800">{{ radio.name }}</h2>
-                
-                <!-- Рік випуску -->
-                <p class="text-amber-600 font-semibold">{{ radio.year }}</p>
-                
-                <!-- Опис радіо -->
-                <p class="text-gray-600 mt-2">{{ radio.description }}</p>
-                
-                <!-- Технічні характеристики (якщо є) -->
+        <!-- GRID -->
+
+        <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-8">
+
+          @for (radio of (radios$ | async); track radio.id) {
+
+            <div
+              class="group bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition duration-300 border border-stone-200"
+            >
+
+              <!-- IMAGE -->
+
+              <div class="relative overflow-hidden">
+
+                <img
+                  [src]="radio.image"
+                  [alt]="radio.name"
+                  class="w-full h-72 object-cover group-hover:scale-105 transition duration-500"
+                >
+
+                <div
+                  class="absolute top-4 left-4 bg-amber-700 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-lg"
+                >
+                  {{ radio.year }}
+                </div>
+              </div>
+
+              <!-- CONTENT -->
+
+              <div class="p-7">
+
+                <h2 class="text-2xl font-bold text-stone-900">
+                  {{ radio.name }}
+                </h2>
+
+                <p class="mt-4 text-stone-600 leading-relaxed">
+                  {{ radio.description }}
+                </p>
+
                 @if (radio.specs) {
-                  <p class="text-sm text-gray-500 mt-2">📋 {{ radio.specs }}</p>
+
+                  <div
+                    class="mt-5 inline-flex items-center gap-2 bg-stone-100 text-stone-700 px-4 py-2 rounded-xl text-sm"
+                  >
+                    📻 {{ radio.specs }}
+                  </div>
                 }
-                
-                <!-- Кнопка для перегляду деталей -->
-                <button class="mt-4 w-full px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded transition">
+
+                <button
+                  class="mt-8 w-full bg-amber-700 hover:bg-amber-600 text-white py-4 rounded-2xl font-semibold transition shadow-lg"
+                >
                   {{ t.details }}
                 </button>
               </div>
@@ -61,27 +105,40 @@ import { LanguageService } from '../../core/services/language.service';
           }
         </div>
 
-        <!-- Повідомлення коли нема радіо -->
-        @if (radios().length === 0) {
-          <div class="text-center text-gray-500 mt-12">
-            <p class="text-lg">{{ t.noRadios }}</p>
+        <!-- EMPTY STATE -->
+
+        @if ((radios$ | async)?.length === 0) {
+
+          <div class="text-center py-32">
+
+            <div class="text-8xl mb-6">
+              📻
+            </div>
+
+            <h2 class="text-3xl font-bold text-stone-800">
+              {{ t.noRadios }}
+            </h2>
+
+            <p class="mt-4 text-stone-500">
+              {{ t.emptyCollection }}
+            </p>
           </div>
         }
       </div>
     </div>
   `,
+
   styles: []
 })
 export class GalleryComponent {
-  // Впровадж сервісу радіо для отримання даних
-  private radioService = inject(RadioService);
-  
-  // Впровадж сервісу мов для перекладів
+
+  private radioService = inject(FirestoreRadioService);
+
   private langService = inject(LanguageService);
-  
-  // Отримуємо сигнал з радіо
-  radios = this.radioService.radios$;
-  
-  // Отримуємо поточні переклади
-  protected t = this.langService.getTranslations();
+
+  radios$ = this.radioService.radios$;
+
+  protected get t() {
+    return this.langService.getTranslations();
+  }
 }
